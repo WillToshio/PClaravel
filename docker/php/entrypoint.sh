@@ -11,7 +11,7 @@ if [ ! -d "/var/www/vendor" ]; then
 fi
 
 # Esperar MySQL ficar pronto
-until php -r "try { new PDO('mysql:host=mysql;dbname=laravel', 'laravel', 'secret'); } catch (Exception \$e) {}" >/dev/null 2>&1; do
+until php -r "try { new PDO('${DB_CONNECTION_MYSQL}:host=${DB_HOST};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}'); } catch (Exception \$e) { echo 'Não conectado'; }" 2>/dev/null; do
   echo "Aguardando MySQL..."
   sleep 2
 done
