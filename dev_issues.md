@@ -1,4 +1,3 @@
-
 # Guia de Problemas e Soluções: Laravel + Docker + MySQL + Nginx
 
 ## 1️⃣ Laravel APP_KEY e PHP incompatível
@@ -31,7 +30,7 @@ APP_KEY=base64:...
 
 **Problema:** APP_PORT is not set, DB_CONNECTION_MYSQL not set.
 
-**Causa:** .env do Laravel não suporta interpolação (${VAR}).
+**Causa:** O `.env` do Laravel não suporta interpolação (`${VAR}`).
 
 **Solução:**
 
@@ -52,6 +51,8 @@ MYSQL_ROOT_PASSWORD=root
 APP_URL=http://localhost:8080
 DB_CONNECTION=mysql
 ```
+
+- **Boas práticas:** Criar `.env.dev`, `.env.stag` e `.env.prod` para diferenciar ambientes e evitar subir `.env` com dados sensíveis no repositório.
 
 ## 3️⃣ MySQL 8 não conecta com Laravel
 
@@ -84,7 +85,7 @@ FLUSH PRIVILEGES;
 
 ## 5️⃣ Laravel não inicia sem banco de dados
 
-**Problema:** no such table: sessions ou erro ao rodar migrations.
+**Problema:** `no such table: sessions` ou erro ao rodar migrations.
 
 **Solução:**
 
@@ -95,9 +96,59 @@ DB_CONNECTION=sqlite
 DB_DATABASE=:memory:
 ```
 
-- Para MySQL, garantir que o container está pronto antes de rodar migrations.
+- Para MySQL, garantir que o container está pronto antes de rodar migrations (ver abaixo o uso do `entrypoint.sh`).
 
-## 6️⃣ Nginx não encontra PHP-FPM
+## 6️⃣ Entrypoint.sh para inicialização confiável
+
+**Problema:** Laravel tenta rodar antes do MySQL estar pronto ou APP_KEY não gerada.
+
+**Solução:** Criar `entrypoint.sh` no container PHP:
+
+```bash
+#!/bin/bash
+set -e
+
+ENV_FILE="/var/www/.env"
+
+# Copia template do .env se não existir
+if [ ! -f "$ENV_FILE" ]; then
+    cp "/var/www/.env.${APP_ENV}" "$ENV_FILE"
+fi
+
+# Gera APP_KEY se estiver vazia
+if ! grep -q "APP_KEY=base64:" "$ENV_FILE"; then
+    NEW_KEY=$(php /var/www/artisan key:generate --show)
+    echo "APP_KEY=$NEW_KEY" >> "$ENV_FILE"
+fi
+
+# Espera MySQL estar pronto
+until php -r "try { new PDO('mysql:host=mysql;dbname=laravel', 'laravel', 'secret'); } catch (Exception \$e) {}" >/dev/null 2>&1; do
+  echo "Aguardando MySQL..."
+  sleep 2
+done
+
+# Rodar migrations em dev/staging
+if [ "$APP_ENV" != "production" ]; then
+    php /var/www/artisan migrate --force
+fi
+
+# Garantir permissões
+chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+
+# Executar comando padrão
+exec "$@"
+```
+
+- Inclua no Dockerfile:
+
+```dockerfile
+COPY ./docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["php-fpm"]
+```
+
+## 7️⃣ Nginx não encontra PHP-FPM
 
 **Problema:** 502 Bad Gateway ou arquivos não são servidos.
 
@@ -107,14 +158,14 @@ DB_DATABASE=:memory:
 
 ```nginx
 location ~ \.php$ {
-    fastcgi_pass php:9000; # nome do serviço PHP no Compose
+    fastcgi_pass php:9000;
     fastcgi_index index.php;
     fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     include fastcgi_params;
 }
 ```
 
-- Mapear volume do Nginx corretamente:
+- Mapear volumes corretamente:
 
 ```yaml
 volumes:
@@ -122,10 +173,39 @@ volumes:
   - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
 ```
 
-## 7️⃣ Boas práticas
+## 8️⃣ .dockerignore
+
+**Problema:** Build pesado ou expor arquivos sensíveis.
+
+**Solução:**
+
+- Criar `.dockerignore` na raiz:
+
+```
+.git
+.github
+node_modules
+vendor
+.env
+.env.*
+```
+
+- Criar `.dockerignore` dentro de `/src` se necessário:
+
+```
+.env
+.env.local
+/storage
+```
+
+- Isso reduz o build, protege dados sensíveis e evita enviar volumes desnecessários para a imagem.
+
+## 9️⃣ Boas práticas gerais
 
 - Separar `.env` do Laravel e do Docker Compose.
-- Gerar APP_KEY dentro do container PHP compatível.
+- Criar `.env.dev`, `.env.stag` e `.env.prod` para versionar variáveis por ambiente.
+- Usar `entrypoint.sh` para inicializar APP_KEY, migrations e checar dependências.
 - Inicializar MySQL com `init.sql` para criar usuário e banco corretos.
 - Testar sem banco usando SQLite antes de conectar MySQL.
-- Documentar cada erro e solução em um arquivo dedicado (este README).
+- Documentar cada erro e solução em um arquivo dedicado (`dev_issues.md`).
+

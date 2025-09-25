@@ -1,0 +1,42 @@
+# Laravel
+/vendor
+/node_modules
+/storage/*.key
+/storage/debugbar/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+/bootstrap/cache/*.php
+
+# /src
+/src/vendor
+/src/node_modules
+/src/storage/*.key
+/src/storage/debugbar/*
+/src/storage/framework/cache/*
+/src/storage/framework/sessions/*
+/src/storage/framework/testing/*
+/src/storage/framework/views/*
+/src/storage/logs/*
+/src/bootstrap/cache/*.php
+
+# Configurações locais
+.env
+.env.*.local
+
+# IDEs e sistema
+*.iml
+.idea
+.vscode
+*.DS_Store
+Thumbs.db
+
+# Git e Docker
+.git
+.gitignore
+.gitattributes
+docker-compose.override.yml
+Dockerfile*
+.dockerignore

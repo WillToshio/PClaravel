@@ -18,4 +18,9 @@ COPY ./src /var/www
 RUN composer install \
     && chown -R www-data:www-data /var/www
 
+# Copiar entrypoint
+COPY ./docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm"]
