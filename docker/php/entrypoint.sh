@@ -11,7 +11,7 @@ if [ ! -d "/var/www/vendor" ]; then
 fi
 
 # Esperar MySQL ficar pronto
-until php -r "try { new PDO('${DB_CONNECTION_MYSQL}:host=${DB_HOST};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}'); } catch (Exception \$e) { echo 'Não conectado'; }" 2>/dev/null; do
+until php -r "try { new PDO('mysql:host=${DB_HOST};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}'); } catch (Exception \$e) { echo 'Não conectado'; exit(1); }" >/dev/null 2>&1; do
   echo "Aguardando MySQL..."
   sleep 2
 done
@@ -26,13 +26,14 @@ fi
 if ! grep -q "APP_KEY=base64:" "$ENV_FILE"; then
     echo "APP_KEY não encontrada. Gerando nova chave..."
     NEW_KEY=$(php /var/www/artisan key:generate --show)
-    echo "APP_KEY=$NEW_KEY" >> "$ENV_FILE"
+    echo "APP_KEY=$NEW_KEY";
     echo "Nova APP_KEY gerada e adicionada ao .env. Copie para o arquivo correspondente (.env.dev, .env.stag ou .env.prod) para manter fixa."
 fi
 
 # Rodar migrations automaticamente (opcional em dev/stag)
 if [ "$APP_ENV" != "production" ]; then
-    php /var/www/artisan migrate --force
+    echo "MySQL pronto! Rodando migrations..."
+    php artisan migrate --force
 fi
 
 # Garantir permissões corretas
