@@ -21,6 +21,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'is_active',
+        'last_login',
+        'role_id',
+        'plan_id',
     ];
 
     /**
@@ -43,6 +48,26 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login' => 'datetime',
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function plan()
+    {
+        // Plano ativo atual (direto da coluna plan_id)
+        return $this->belongsTo(Plan::class);
+    }
+
+    // Planos do usuário (histórico)
+    public function planHistory()
+    {
+        // Histórico de planos do usuário
+        return $this->hasMany(UserPlan::class)->with('plan')->orderBy('starts_at', 'desc');
     }
 }

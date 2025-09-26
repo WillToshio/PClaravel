@@ -36,6 +36,10 @@ if [ "$APP_ENV" != "production" ]; then
     php artisan migrate --force
 fi
 
+if [ ! -f "/var/www/config/sanctum.php" ]; then
+    php artisan vendor:publish --provider="Laravel\\Sanctum\\SanctumServiceProvider" --force
+fi
+
 # Garantir permissões corretas
 chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
