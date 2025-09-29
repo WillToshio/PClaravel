@@ -19,6 +19,9 @@ services:
       DB_DATABASE: ${DB_DATABASE} 
       DB_USERNAME: ${DB_USERNAME} 
       DB_PASSWORD: ${DB_PASSWORD}
+      CACHE_DRIVER: ${CACHE_DRIVER}
+      SESSION_DRIVER: ${SESSION_DRIVER}
+      SESSION_LIFETIME: ${SESSION_LIFETIME}
     working_dir: /var/www
     networks:
       - laravel-net

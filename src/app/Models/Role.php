@@ -15,15 +15,20 @@ class Role extends Model
         'description',
     ];
 
-    // Relação com usuários
+     // Relacionamento muitos-para-muitos com users
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->belongsToMany(User::class, 'user_roles');
     }
 
     // Relação com permissões
     public function permissions()
     {
         return $this->hasMany(Permission::class);
+    }
+
+    public function scopeNameInsensitive($query, $name)
+    {
+        return $query->whereRaw('UPPER(name) = ?', [strtoupper($name)]);
     }
 }

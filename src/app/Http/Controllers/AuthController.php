@@ -29,7 +29,7 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => bcrypt($data['password']),
+            'password' => Hash::make($data['password']),
             'role_id' => $default_role, // fixo
             'plan_id' => $dqfault_plan  // fixo
         ]);
@@ -78,33 +78,75 @@ class AuthController extends Controller
     /**
      * Retorna o perfil do usuário
      */
+
     public function me(Request $request)
     {
-        // Usuário autenticado via Sanctum
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        // Eager load das relações
-        $user->load('role', 'planHistory.plan');
+            // Verifica se o usuário está autenticado
+            if (!$user) {
+                return response()->json([
+                    'message' => 'Usuário não autenticado'
+                ], 401);
+            }
 
-        $profile = [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'role' => $user->role->name ?? null,
-            'plan' => $user->plan->name ?? null,          // plano ativo
-            'plan_history' => $user->planHistory->map(function($p) {
-                return [
-                    'plan_name' => $p->plan->name ?? null,
-                    'starts_at' => $p->starts_at?->toDateTimeString(),
-                    'expires_at' => $p->expires_at?->toDateTimeString(),
-                    'is_active' => $p->is_active,
-                ];
-            }),
-        ];
+            // Carrega todas as relações necessárias
+            $user->load([
+                'roles',
+                'plans',
+                'planHistory.plan'
+            ]);
 
-        return response()->json([
-            'profile' => $profile
-        ]);
+            // Encontra o plano ativo atual
+            $activePlan = $user->plans
+                ->where('pivot.is_active', true)
+                ->where('pivot.expires_at', '>', now())
+                ->first();
+
+            // Constrói o perfil completo
+            $profile = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'email_verified_at' => $user->email_verified_at,
+                'is_active' => $user->is_active,
+                'last_login' => $user->last_login,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+                'roles' => $user->roles->pluck('name')->toArray(),
+                'current_plan' => $activePlan ? [
+                    'name' => $activePlan->name,
+                    'price' => $activePlan->price,
+                    'duration_days' => $activePlan->duration_days,
+                    'features' => $activePlan->features,
+                    'starts_at' => $activePlan->pivot->starts_at?->toISOString(),
+                    'expires_at' => $activePlan->pivot->expires_at?->toISOString(),
+                    'is_active' => $activePlan->pivot->is_active,
+                ] : null,
+                'plan_history' => $user->planHistory->map(function($userPlan) {
+                    return [
+                        'plan_name' => $userPlan->plan->name ?? 'Plano não encontrado',
+                        'starts_at' => $userPlan->starts_at?->toISOString(),
+                        'expires_at' => $userPlan->expires_at?->toISOString(),
+                        'is_active' => $userPlan->is_active,
+                        'created_at' => $userPlan->created_at?->toISOString(),
+                    ];
+                })->toArray(),
+            ];
+
+            return response()->json([
+                'message' => 'Perfil recuperado com sucesso',
+                'profile' => $profile
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao recuperar perfil',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

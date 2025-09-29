@@ -34,6 +34,7 @@ fi
 if [ "$APP_ENV" != "production" ]; then
     echo "MySQL pronto! Rodando migrations..."
     php artisan migrate --force
+    php artisan db:seed
 fi
 
 if [ ! -f "/var/www/config/sanctum.php" ]; then

@@ -1,73 +1,62 @@
 <?php
-
+// app/Models/User.php
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes, HasApiTokens;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
-        'password',
         'phone',
+        'password',
         'is_active',
         'last_login',
-        'role_id',
-        'plan_id',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'last_login' => 'datetime',
+        'is_active' => 'boolean',
+    ];
+
+    // Relacionamento muitos-para-muitos com roles (papeis)
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_roles');
+    }
+
+    // Relacionamento muitos-para-muitos com plans (planos)
+    public function plans()
+    {
+        return $this->belongsToMany(Plan::class, 'user_plans')
+                    ->withPivot('starts_at', 'expires_at', 'is_active')
+                    ->withTimestamps();
+    }
+
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Relação um-para-muitos com user_plans (histórico completo)
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'last_login' => 'datetime',
-            'is_active' => 'boolean',
-        ];
-    }
-
-    public function role()
-    {
-        return $this->belongsTo(Role::class);
-    }
-
-    public function plan()
-    {
-        // Plano ativo atual (direto da coluna plan_id)
-        return $this->belongsTo(Plan::class);
-    }
-
-    // Planos do usuário (histórico)
     public function planHistory()
     {
-        // Histórico de planos do usuário
-        return $this->hasMany(UserPlan::class)->with('plan')->orderBy('starts_at', 'desc');
+        return $this->hasMany(UserPlan::class);
+    }
+
+    // Relacionamento um-para-muitos com permissions (se for específico do usuário)
+    public function permissions()
+    {
+        return $this->hasMany(Permission::class);
     }
 }

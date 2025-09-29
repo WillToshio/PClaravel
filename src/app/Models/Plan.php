@@ -17,15 +17,30 @@ class Plan extends Model
         'features',
     ];
 
+    protected $casts = [
+        'price' => 'decimal:2',
+        'features' => 'array'
+    ];
+
     // Usuários com este plano ativo (plan_id)
     public function users()
     {
-        return $this->hasMany(User::class);
+
+        return $this->belongsToMany(User::class, 'user_plans')
+                    ->withPivot('starts_at', 'expires_at', 'is_active')
+                    ->withTimestamps();
     }
 
     // Histórico de usuários (pivot UserPlan)
     public function userPlans()
     {
-        return $this->hasMany(UserPlan::class);
+
+        return $this->belongsToMany(User::class, 'user_plans')
+                    ->withPivot('starts_at', 'expires_at', 'is_active')
+                    ->withTimestamps();
+    }
+    public function scopeNameInsensitive($query, $name)
+    {
+        return $query->whereRaw('UPPER(name) = ?', [strtoupper($name)]);
     }
 }

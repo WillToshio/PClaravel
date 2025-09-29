@@ -57,6 +57,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('role_id')->constrained('roles')->cascadeOnDelete();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // PLANS (free, basic, premium, deluxe)
@@ -79,6 +80,7 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // MODULES (ex: dashboard, reports, billing)

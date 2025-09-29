@@ -12,7 +12,7 @@ class RoleSeeder extends Seeder
         DB::table('roles')->insert([
             [
                 'name' => 'root',
-                'description' => 'Superusuário com acesso total ao sistema',
+                'description' => 'Superusuario com acesso total ao sistema',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -30,7 +30,7 @@ class RoleSeeder extends Seeder
             ],
             [
                 'name' => 'user',
-                'description' => 'Usuário padrão do sistema',
+                'description' => 'Usuario padrão do sistema',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
