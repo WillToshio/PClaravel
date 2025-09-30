@@ -10,11 +10,7 @@ if [ ! -d "/var/www/vendor" ]; then
     composer install --no-interaction --prefer-dist --optimize-autoloader
 fi
 
-# Esperar MySQL ficar pronto
-until php -r "try { new PDO('mysql:host=${DB_HOST};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}'); } catch (Exception \$e) { echo 'Não conectado'; exit(1); }" >/dev/null 2>&1; do
-  echo "Aguardando MySQL..."
-  sleep 2
-done
+
 
 # Se o .env não existir, copiar do template baseado em APP_ENV
 if [ ! -f "$ENV_FILE" ]; then
@@ -29,6 +25,19 @@ if ! grep -q "APP_KEY=base64:" "$ENV_FILE"; then
     echo "APP_KEY=$NEW_KEY";
     echo "Nova APP_KEY gerada e adicionada ao .env. Copie para o arquivo correspondente (.env.dev, .env.stag ou .env.prod) para manter fixa."
 fi
+
+echo "Limpando cache do Laravel..."
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+php artisan config:cache
+
+# Esperar MySQL ficar pronto
+until php -r "try { new PDO('mysql:host=${DB_HOST};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}'); } catch (Exception \$e) { echo 'Não conectado'; exit(1); }" >/dev/null 2>&1; do
+  echo "Aguardando MySQL..."
+  sleep 2
+done
 
 # Rodar migrations automaticamente (opcional em dev/stag)
 if [ "$APP_ENV" != "production" ]; then

@@ -33,12 +33,12 @@ class DatabaseSeeder extends Seeder
             'duration_days' => 365,
             'features' => 'All features included'
         ]);
-        $planDeluxe = Plan::firstOrCreate(['name' => 'Premium'], [
+        $planPremium = Plan::firstOrCreate(['name' => 'Premium'], [
             'price' => 59.99,
             'duration_days' => 180,
             'features' => 'All features included'
         ]);
-        $planDeluxe = Plan::firstOrCreate(['name' => 'Basic'], [
+        $planBasic = Plan::firstOrCreate(['name' => 'Basic'], [
             'price' => 29.99,
             'duration_days' => 90,
             'features' => 'All features included'

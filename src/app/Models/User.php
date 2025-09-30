@@ -43,7 +43,8 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Plan::class, 'user_plans')
                     ->withPivot('starts_at', 'expires_at', 'is_active')
-                    ->withTimestamps();
+                    ->withTimestamps()
+                    ->as('subscription');
     }
 
     /**

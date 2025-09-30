@@ -27,7 +27,7 @@ class Plan extends Model
     {
 
         return $this->belongsToMany(User::class, 'user_plans')
-                    ->withPivot('starts_at', 'expires_at', 'is_active')
+                    ->withPivot('starts_at', 'expires_at', 'is_active', 'updated_at')
                     ->withTimestamps();
     }
 
@@ -36,7 +36,7 @@ class Plan extends Model
     {
 
         return $this->belongsToMany(User::class, 'user_plans')
-                    ->withPivot('starts_at', 'expires_at', 'is_active')
+                    ->withPivot('starts_at', 'expires_at', 'is_active', 'updated_at')
                     ->withTimestamps();
     }
     public function scopeNameInsensitive($query, $name)

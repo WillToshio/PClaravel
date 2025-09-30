@@ -1,11 +1,12 @@
 <?php
-
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
-
+/*
 Route::get('/', function () {
     return view('welcome');
 });
-
+*/
+/*
 // versão 1 do api
 Route::prefix('v1')->group(function (){
 
@@ -20,3 +21,4 @@ Route::prefix('v1')->group(function (){
 
 
 });
+*/
